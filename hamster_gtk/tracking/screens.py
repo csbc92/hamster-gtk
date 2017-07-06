@@ -25,7 +25,7 @@ from __future__ import absolute_import, unicode_literals
 import datetime
 from gettext import gettext as _
 
-from gi.repository import GObject, Gtk, Gdk
+from gi.repository import GObject, Gtk
 from hamster_lib import Fact
 
 import hamster_gtk.helpers as helpers
@@ -254,7 +254,7 @@ class StartTrackingBox(Gtk.Box):
         # We fetch an arbitrary Button as height-reference
         child = grid.get_children()[1]
         height = child.get_preferred_height()[1]
-        min_height = 6 * height
+        min_height = self._app.config['tracking_recent_activities_items'] * height
 
         scrolled_window.set_min_content_height(min_height)
         scrolled_window.add(grid)
@@ -271,20 +271,17 @@ class StartTrackingBox(Gtk.Box):
 
     def _on_config_changed(self, sender):
         """Callback triggered when 'config-changed' event fired."""
-        print('CALLBACK TRIGGERD')
-        print(self._app.config)
         if self._app.config['tracking_show_recent_activities']:
+            # We re-create it even if one existed before necause its parameters
+            # (e.g. size) may have changed.
             if self.recent_activities_widget:
-                pass
-            else:
-                self.recent_activities_widget = self._get_recent_activities_widget()
-                self.pack_start(self.recent_activities_widget, True, True, 0)
+                self.recent_activities_widget.destroy()
+            self.recent_activities_widget = self._get_recent_activities_widget()
+            self.pack_start(self.recent_activities_widget, True, True, 0)
         else:
             if self.recent_activities_widget:
                 self.recent_activities_widget.destroy()
                 self.recent_activities_widget = None
-            else:
-                pass
         self.show_all()
 
 
@@ -359,7 +356,6 @@ class RecentActivitiesGrid(Gtk.Grid):
         for activity in activities:
             add_row_widgets(row_counter, activity)
             row_counter += 1
-
 
     def _on_copy_button(self, button, activity):
         """
